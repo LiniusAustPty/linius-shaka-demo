@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package dash;
+
+option java_package = "com.linius.assembly.model";
+option java_outer_classname = "DASHProto";
+
+message Range {
+    int64 from = 1;
+    int64 to = 2;
+}
+
+message Segment {
+    bytes sixdmoof = 1;
+    int32 mdatSize = 2;
+    repeated Range mdatRanges = 3;
+    double startTime = 4;
+    double endTime = 5;
+}
+
+message FragmentInfo {
+    int32 width = 1;
+    int32 height = 2;
+    string codecs = 3;
+    double frameRate = 4;
+    int32 bandwidth = 5;
+    string language = 6;
+    double maxSegmentDuration = 7;
+}
+
+message DASHVstub {
+    string assetUrl = 1;
+    int32 segmentsNumber = 2;
+    bytes initSegment = 3;
+    double duration = 4;
+    FragmentInfo info = 5;
+    int32 order = 7;
+
+    repeated Segment segments = 6;
+}
+
+message DASHABRVstub {
+    repeated DASHVstub representation = 1;
+}
+
+message DASHPlaylist {
+    repeated DASHVstub periods = 1;
+    repeated DASHABRVstub abrPeriods = 2;
+}
