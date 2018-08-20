@@ -35,6 +35,7 @@ message DASHVstub {
     double duration = 4;
     FragmentInfo info = 5;
     int32 order = 7;
+    string encryptionKeyId = 8;
 
     repeated Segment segments = 6;
 }
@@ -46,4 +47,10 @@ message DASHABRVstub {
 message DASHPlaylist {
     repeated DASHVstub periods = 1;
     repeated DASHABRVstub abrPeriods = 2;
+
+    enum LDashVersion {
+        BASIC = 0;
+        ENCRYPTION_SUPPORT = 1;
+    }
+    LDashVersion version = 3;
 }
