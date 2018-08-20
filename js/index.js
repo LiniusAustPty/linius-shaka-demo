@@ -110,7 +110,7 @@
 			autoplay: true,
 			controls: true,
 			sources: [{
-				src: 'data/test.pvstub',
+				src: 'data/test.pvstub', // source can be changed
 				type: 'linius/pvstub',
 			}]
 		}
