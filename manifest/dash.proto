@@ -28,6 +28,12 @@ message FragmentInfo {
     double maxSegmentDuration = 7;
 }
 
+message PsshAtom {
+    bytes atom = 1;
+    bytes systemId = 2;
+    repeated string keyIds = 3;
+}
+
 message DASHVstub {
     string assetUrl = 1;
     int32 segmentsNumber = 2;
@@ -36,7 +42,7 @@ message DASHVstub {
     FragmentInfo info = 5;
     int32 order = 7;
     string encryptionKeyId = 8;
-    repeated bytes psshAtoms = 9;
+    repeated PsshAtom psshAtoms = 9;
 
     repeated Segment segments = 6;
 }
@@ -61,4 +67,5 @@ message DASHPlaylist {
         WIDEWINE_DRM_SUPPORT = 2;
     }
     LDashVersion version = 3;
+
 }

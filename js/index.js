@@ -41,29 +41,26 @@
 
 				player.shakaPlayer.configure({
 					drm: {
-						// clearKeys: {
-						// 	'__KEY_ID__': '__CONTENT_KEY_ID__',
-						// },
 						servers: {
-							"com.widevine.alpha": "http://wv-keyos.licensekeyserver.com/",
-						}
+							"com.widevine.alpha": "https://wv-keyos.licensekeyserver.com",
+						},
 					}
 				});
 
-				
+
 				// * Here is an example how to add custom headers to request
 				// * Helpful to add auth & x-api-key header to use linius engine
 				// * @example
 				player.shakaPlayer.getNetworkingEngine().registerRequestFilter(function (type, request) {
 					// var XApiKeyHeaderKey = 'x-api-key'
-	
+
 					if (type == shaka.net.NetworkingEngine.RequestType.LICENSE) {
 						// This is the specific header name and value the server wants.
 						// You need to add actual authentication XML here in base64 encoded format.
 						request.headers.customdata = xml
 					}
 				})
-				
+
 
 				player.shakaPlayer.load(source.src).catch(player.onError)
 				player.shakaPlayer.addEventListener('error', player.onError)
@@ -125,7 +122,7 @@
 			autoplay: true,
 			controls: true,
 			sources: [{
-				src: 'data/bunny-enc.pvstub', // source can be changed
+				src: '/data/2605699_with_pssh_in_initsegment.pvstub', // source can be changed
 				type: 'linius/pvstub',
 			}]
 		}
