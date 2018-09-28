@@ -122,7 +122,7 @@
 			autoplay: true,
 			controls: true,
 			sources: [{
-				src: '/data/2605699_with_pssh_in_initsegment.pvstub', // source can be changed
+				src: '/data/sample.pvstub', // source can be changed
 				type: 'linius/pvstub',
 			}]
 		}
