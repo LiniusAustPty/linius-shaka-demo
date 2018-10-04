@@ -9,3 +9,8 @@ Check source -> *js/index.js* to get insight how to integrate your own UI with s
 To check the demo you can do the following:
 - `nginx -p . -c ./nginx/nginx.conf`
 - Go to http://localhost:8080
+
+Caveats:
+- ES6 syntax features is used in example
+- Chrome fits better than other browsers to check the example
+- This example doesn't work in IE (any versions of it)
