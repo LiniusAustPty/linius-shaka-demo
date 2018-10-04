@@ -1,34 +1,22 @@
 (function (global) { // global == window
-	var SUPPORTED_TYPES = ['linius/pvstub', 'application/dash+xml']
+	// TODO: use prod service address, stage env api address
+	const SHAKA_TECH_NAME = 'SHAKA_TECH'
+	const MANIFEST_URL = 'manifest/dash.proto'
+	const SUPPORTED_TYPES = ['linius/pvstub', 'application/dash+xml']
+	const LICENSE_SERVER_URL = 'https://wv-keyos.licensekeyserver.com'
+	const AUTH_XML_URL = 'https://api.stage.linius.com/v2/drm/authXml'
 
-	function includes(array, substr) {
-		return array.some(function (element) {
-			return element.indexOf(substr) !== -1
-		})
-	}
+	const { loadManifest, includes, getAuthXml } = global.demoUtils;
 
-	function loadManifest(manifestUrl) {
-		var protobuf = global.protobuf
+	// Creates shaka.tech and init drm sources and license headers
+	function createShakaTech(authXml) {
+		const DefaultTech = videojs.getTech('Html5')
 
-		return new Promise(function (resolve, reject) {
-			protobuf.load(manifestUrl, function (error, schema) {
-				if (error) {
-					reject(error)
-					return
-				}
-
-				resolve(schema)
-			})
-		})
-	}
-
-	function createShakaTech() {
-		var DefaultTech = videojs.getTech('Html5')
-
-		var ShakaTech = videojs.extend(DefaultTech, {
+		const ShakaTech = videojs.extend(DefaultTech, {
+			// Video js throw exception if shorthand syntax is used
 			constructor: function (options, ready) {
-				var player = this
-				var source = options.source
+				const player = this
+				const source = options.source
 
 				delete options.source
 
@@ -37,52 +25,55 @@
 				const videoElement = player.el()
 				player.shakaPlayer = new shaka.Player(videoElement)
 
-				/*
+				player.shakaPlayer.configure({
+					drm: {
+						servers: {
+							'com.widevine.alpha': LICENSE_SERVER_URL,
+						},
+					}
+				});
+
 				// * Here is an example how to add custom headers to request
 				// * Helpful to add auth & x-api-key header to use linius engine
 				// * @example
-				player.shakaPlayer.getNetworkingEngine().registerRequestFilter(function (type, request) {
-					var XApiKeyHeaderKey = 'x-api-key'
-	
-					request.headers.authorization = 'Bearer ' + __AUTH_TOKEN__
-					request.headers[XApiKeyHeaderKey] = __X_API_KEY__
-					request.headers.Accept = 'application/octet-stream'
+				player.shakaPlayer.getNetworkingEngine().registerRequestFilter((type, request) => {
+					if (type == shaka.net.NetworkingEngine.RequestType.LICENSE) {
+						// This is the specific header name and value the server wants.
+						// You need to add actual authentication XML here in base64 encoded format.
+						request.headers.customdata = authXml
+					}
 				})
-				*/
 
 				player.shakaPlayer.load(source.src).catch(player.onError)
 				player.shakaPlayer.addEventListener('error', player.onError)
 
-				player.one('dispose', function () {
+				player.one('dispose', () => {
 					console.info('[Info]: Player destroyed successfully')
 					player.shakaPlayer.destroy()
 				})
 			},
 
-			onError: function (error) {
-				var innerError = error.detail ? error.detail : error
+			onError(error) {
+				const innerError = error.detail ? error.detail : error
 				console.error(innerError)
 			},
 		})
 
-		ShakaTech.isSupported = function () {
-			return Boolean(global.MediaSource)
-		}
 
-		ShakaTech.canPlaySource = function (params) {
-			var type = params.type
+		ShakaTech.isSupported = () => Boolean(global.MediaSource)
+		ShakaTech.canPlaySource = (params) => {
+			const type = params.type
 			return includes(SUPPORTED_TYPES, type) ? 'maybe' : undefined
 		}
 
 		return ShakaTech
 	}
 
-	function initPlayer() {
-		var shaka = global.shaka
-		var videojs = global.videojs
 
-		var MANIFEST_URL = 'manifest/dash.proto'
-		var SHAKA_TECH_NAME = 'SHAKA_TECH'
+	// Inits player and player's playback engine
+	function initPlayer(authXml) {
+		const shaka = global.shaka
+		const videojs = global.videojs
 
 		shaka.polyfill.installAll()
 
@@ -91,7 +82,7 @@
 			return
 		}
 
-		var ShakaTech = createShakaTech()
+		const ShakaTech = createShakaTech(authXml)
 
 		videojs.options.techOrder.unshift(SHAKA_TECH_NAME)
 		videojs.registerTech(SHAKA_TECH_NAME, ShakaTech)
@@ -99,34 +90,36 @@
 		global.VIDEOJS_NO_DYNAMIC_STYLE = true
 
 		return loadManifest(MANIFEST_URL)
-			.then(function (scheme) {
+			.then((scheme) => {
 				global.VstubSchema = scheme
 			})
 	}
 
+	// Creates video player after all prepartion around
+	// shaka tech is done
 	function createVideoPlayer() {
-		var playerProps = {
+		const playerProps = {
 			playbackRates: [0.5, 1, 1.25, 2, 5],
 			autoplay: true,
 			controls: true,
 			sources: [{
-				src: 'data/test.pvstub', // source can be changed
+				src: '/data/cbcs.pvstub', // Encrypted content is set by default
 				type: 'linius/pvstub',
 			}]
 		}
 
-		var divWrapper = document.getElementById('wrapper')
-		var videoNode = document.createElement('video')
+		const divWrapper = document.getElementById('wrapper')
+		const videoNode = document.createElement('video')
 		videoNode.classList.add('video-js')
 		divWrapper.appendChild(videoNode)
 
-		return videojs(videoNode, playerProps, function () { })
+		return videojs(videoNode, playerProps, () => { })
 	}
 
-	document.addEventListener('DOMContentLoaded', function () {
-		initPlayer()
-			.then(function () {
-				createVideoPlayer()
-			})
+
+	document.addEventListener('DOMContentLoaded', () => {
+		getAuthXml(AUTH_XML_URL)
+			.then(authXml => initPlayer(authXml))
+			.then(() => createVideoPlayer())
 	})
 })(window)
