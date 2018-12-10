@@ -108,6 +108,12 @@
 			}]
 		}
 
+		// #region debug purpose only
+		const videoSrcWrapper = document.getElementById('src-name')
+		videoSrcWrapper.innerHTML = `Video Source: ${playerProps.sources[0].src}`
+		// #endregion
+
+
 		const divWrapper = document.getElementById('wrapper')
 		const videoNode = document.createElement('video')
 		videoNode.classList.add('video-js')
