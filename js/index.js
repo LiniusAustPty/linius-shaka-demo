@@ -103,7 +103,7 @@
 			autoplay: true,
 			controls: true,
 			sources: [{
-				src: '/data/cbcs.pvstub', // Encrypted content is set by default
+				src: './data/568cenc.pvstub', // Encrypted content is set by default
 				type: 'linius/pvstub',
 			}]
 		}
@@ -117,15 +117,41 @@
 		const divWrapper = document.getElementById('wrapper')
 		const videoNode = document.createElement('video')
 		videoNode.classList.add('video-js')
+
+		// Add Videojs eventTracking plugin
+		videoNode.setAttribute("data-setup", '{"plugins": {"eventTracking": true}}');
 		divWrapper.appendChild(videoNode)
+		const player = videojs(videoNode, playerProps, () => { })
 
-		return videojs(videoNode, playerProps, () => { })
+		// DEBUGGING Event Tackers/Listeners. Disable if not required
+		player.on('tracking:firstplay', (e, data) => console.log(data));
+		player.on('tracking:pause', (e, data) => console.log(data));
+		player.on('tracking:seek', (e, data) => console.log(data));
+		player.on('tracking:buffered', (e, data) => console.log(data));
+
+		// Extra stuff for tracking overall percentile of completion, This event triggers each quarter of a video.
+		player.on('tracking:first-quarter', (e, data) => console.log(data))
+		player.on('tracking:second-quarter', (e, data) => console.log(data))
+		player.on('tracking:third-quarter', (e, data) => console.log(data))
+		player.on('tracking:fourth-quarter', (e, data) => console.log(data))
+
+		// Send Events to amplitude
+		// Attributes pauseCount, seekCount, bufferCount, totalDuration, watchedDuration, bufferDuration, initialLoadTime
+		// only triggered when Player has changed sources, has ended, or has been destroyed
+		player.eventTracking({
+			performance: function(data) {
+		        console.log('tracking:performance', data);
+		        amplitude.logEvent("video-stream-web", data);
+		        setTimeout(console.log("done"), 1000);
+		        }
+		      });
+
+		return player
 	}
-
-
 	document.addEventListener('DOMContentLoaded', () => {
 		getAuthXml(AUTH_XML_URL)
 			.then(authXml => initPlayer(authXml))
 			.then(() => createVideoPlayer())
+
 	})
 })(window)
